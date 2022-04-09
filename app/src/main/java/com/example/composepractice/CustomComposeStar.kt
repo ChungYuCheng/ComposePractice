@@ -1,9 +1,12 @@
 package com.example.composepractice
 
-import android.graphics.drawable.ColorDrawable
-import android.util.Log
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,8 +23,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -32,26 +33,34 @@ import kotlin.math.roundToInt
 @Preview
 @Composable
 fun MakeCustomComposeView() {
+    var boxState by remember { mutableStateOf(BoxState.DEFAULT) }
     var starTintState by remember { mutableStateOf(R.drawable.ic_icon_star) }
-    var starTintColor by remember { mutableStateOf(Color(0xFFFBBF2F)) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     var rotation by remember { mutableStateOf(0f) }
     var defaultVisibility by remember { mutableStateOf(false) }
     val defaultColor = Color(0xFF6200EE)
-    val value by animateFloatAsState(
+    val rotateAnim by animateFloatAsState(
         targetValue = rotation,
         animationSpec = tween(
             easing = LinearEasing
         )
     )
-    val transition = updateTransition(targetState = starTintState, label = "")
+    val transition = updateTransition(targetState = boxState, label = "")
+    val tintColorAnim by transition.animateColor(label = "") { state ->
+        when (state) {
+            BoxState.Blue -> Color.Blue
+            BoxState.Green -> Color.Green
+            BoxState.Red -> Color.Red
+            BoxState.DEFAULT -> Color(0xFFFBBF2F)
+        }
+    }
 
     Column {
         Row(modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center) {
                 Image(painter = painterResource(id = starTintState),
-                    colorFilter = ColorFilter.tint(starTintColor),
+                    colorFilter = ColorFilter.tint(tintColorAnim),
                     contentDescription = "一個星星",
                     modifier = Modifier
                         .size(80.dp)
@@ -61,8 +70,6 @@ fun MakeCustomComposeView() {
                                 change.consumeAllChanges()
                                 offsetX += dragAmount.x
                                 offsetY += dragAmount.y
-                                Log.d("Joe", "Joe 看offsetX $offsetX")
-//                                Log.d("Joe", "Joe 看offsetY $offsetY")
                                 defaultVisibility = true
                             }
                         }
@@ -70,7 +77,7 @@ fun MakeCustomComposeView() {
                             starTintState = R.drawable.ic_icon_full_star
                             defaultVisibility = true
                         }
-                        .rotate(value)
+                        .rotate(rotateAnim)
                 )
         }
         
@@ -86,8 +93,8 @@ fun MakeCustomComposeView() {
                 })
             AnimatedVisibility (defaultVisibility) {
                 Text(text = "Default", modifier = Modifier.clickable {
+                    boxState = BoxState.DEFAULT
                     starTintState = R.drawable.ic_icon_star
-                    starTintColor = Color(0xFFFBBF2F)
                     offsetX = 0f
                     offsetY = 0f
                     rotation = 0f
@@ -108,19 +115,23 @@ fun MakeCustomComposeView() {
             .fillMaxWidth()
             .fillMaxHeight(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Brick(Color.Blue) {
-                starTintColor = Color.Blue
+                boxState = BoxState.Blue
                 defaultVisibility = true
             }
             Brick(Color.Green) {
-                starTintColor = Color.Green
+                boxState = BoxState.Green
                 defaultVisibility = true
             }
             Brick(Color.Red) {
-                starTintColor = Color.Red
+                boxState = BoxState.Red
                 defaultVisibility = true
             }
         }
     }
+}
+
+private enum class BoxState{
+    Blue, Green, Red, DEFAULT
 }
 
 @Preview
