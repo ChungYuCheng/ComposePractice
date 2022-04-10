@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -33,10 +34,13 @@ import kotlin.math.roundToInt
 fun MakeCustomComposeView() {
     var boxState by remember { mutableStateOf(BoxState.DEFAULT) }
     var starState by remember { mutableStateOf(StarState.Empty) }
-
-//    var starTintState by remember { mutableStateOf(R.drawable.ic_icon_star) }
-    var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+    var offSet by remember { mutableStateOf(IntOffset(0,0)) }
+    val starAnim by animateIntOffsetAsState(
+        targetValue = offSet,
+        animationSpec = spring(
+            Spring.DampingRatioNoBouncy, Spring.StiffnessMedium
+        )
+    )
     var rotation by remember { mutableStateOf(0f) }
     var defaultVisibility by remember { mutableStateOf(false) }
     val defaultColor = Color(0xFF6200EE)
@@ -46,8 +50,8 @@ fun MakeCustomComposeView() {
             easing = LinearEasing
         )
     )
-    val transition = updateTransition(targetState = boxState, label = "")
-    val tintColorAnim by transition.animateColor(label = "") { state ->
+    val boxTransition = updateTransition(targetState = boxState, label = "")
+    val tintColorAnim by boxTransition.animateColor(label = "") { state ->
         when (state) {
             BoxState.Blue -> Color.Blue
             BoxState.Green -> Color.Green
@@ -70,12 +74,12 @@ fun MakeCustomComposeView() {
                     contentDescription = "一個星星",
                     modifier = Modifier
                         .size(80.dp)
-                        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                        .offset { starAnim }
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
                                 change.consumeAllChanges()
-                                offsetX += dragAmount.x
-                                offsetY += dragAmount.y
+                                offSet =
+                                    IntOffset((offSet.x + dragAmount.x).roundToInt(), (offSet.y + dragAmount.y).roundToInt())
                                 defaultVisibility = true
                             }
                         }
@@ -102,12 +106,10 @@ fun MakeCustomComposeView() {
                 Text(text = "Default", modifier = Modifier.clickable {
                     boxState = BoxState.DEFAULT
                     starState = StarState.Empty
-                    offsetX = 0f
-                    offsetY = 0f
+                    offSet = IntOffset(0, 0)
                     rotation = 0f
                     defaultVisibility = false
-                },
-                    color = defaultColor)
+                }, color = defaultColor)
             }
             Rotation(modifier = Modifier
                 .size(30.dp)
