@@ -1,12 +1,10 @@
 package com.example.composepractice
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,7 +32,9 @@ import kotlin.math.roundToInt
 @Composable
 fun MakeCustomComposeView() {
     var boxState by remember { mutableStateOf(BoxState.DEFAULT) }
-    var starTintState by remember { mutableStateOf(R.drawable.ic_icon_star) }
+    var starState by remember { mutableStateOf(StarState.Empty) }
+
+//    var starTintState by remember { mutableStateOf(R.drawable.ic_icon_star) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     var rotation by remember { mutableStateOf(0f) }
@@ -59,7 +59,13 @@ fun MakeCustomComposeView() {
     Column {
         Row(modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center) {
-                Image(painter = painterResource(id = starTintState),
+            Crossfade(targetState = starState) { state ->
+                val imgId = if (state == StarState.Fill) {
+                    R.drawable.ic_icon_full_star
+                } else {
+                    R.drawable.ic_icon_star
+                }
+                Image(painter = painterResource(id = imgId),
                     colorFilter = ColorFilter.tint(tintColorAnim),
                     contentDescription = "一個星星",
                     modifier = Modifier
@@ -74,11 +80,12 @@ fun MakeCustomComposeView() {
                             }
                         }
                         .clickable {
-                            starTintState = R.drawable.ic_icon_full_star
+                            starState = StarState.Fill
                             defaultVisibility = true
                         }
                         .rotate(rotateAnim)
                 )
+            }
         }
         
         Row(modifier = Modifier
@@ -94,7 +101,7 @@ fun MakeCustomComposeView() {
             AnimatedVisibility (defaultVisibility) {
                 Text(text = "Default", modifier = Modifier.clickable {
                     boxState = BoxState.DEFAULT
-                    starTintState = R.drawable.ic_icon_star
+                    starState = StarState.Empty
                     offsetX = 0f
                     offsetY = 0f
                     rotation = 0f
@@ -130,8 +137,12 @@ fun MakeCustomComposeView() {
     }
 }
 
-private enum class BoxState{
+private enum class BoxState {
     Blue, Green, Red, DEFAULT
+}
+
+private enum class StarState {
+    Fill, Empty
 }
 
 @Preview
