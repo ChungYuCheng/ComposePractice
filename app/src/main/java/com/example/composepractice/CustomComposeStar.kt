@@ -1,5 +1,6 @@
 package com.example.composepractice
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -22,6 +23,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -76,12 +79,32 @@ fun MakeCustomComposeView() {
                         .size(80.dp)
                         .offset { starAnim }
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
+                            detectDragGestures(onDrag = { change, dragAmount ->
                                 change.consumeAllChanges()
+                                if (offSet.y >= 413) {
+                                    when (offSet.x) {
+                                        in -495..-375 -> {
+                                            starState = StarState.Fill
+                                            boxState = BoxState.Blue
+                                        }
+                                        in -120..120 -> {
+                                            starState = StarState.Fill
+                                            boxState = BoxState.Green
+                                        }
+                                        in 375..495 -> {
+                                            starState = StarState.Fill
+                                            boxState = BoxState.Red
+                                        }
+                                    }
+                                }
                                 offSet =
                                     IntOffset((offSet.x + dragAmount.x).roundToInt(), (offSet.y + dragAmount.y).roundToInt())
-                                defaultVisibility = true
-                            }
+                            }, onDragEnd = {
+                                offSet = IntOffset(0, 0)
+                                if (starState != StarState.Empty || boxState != BoxState.DEFAULT) {
+                                    defaultVisibility = true
+                                }
+                            })
                         }
                         .clickable {
                             starState = StarState.Fill
@@ -121,8 +144,7 @@ fun MakeCustomComposeView() {
         }
 
         Row(modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Brick(Color.Blue) {
                 boxState = BoxState.Blue
                 defaultVisibility = true
